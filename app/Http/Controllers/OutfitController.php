@@ -8,13 +8,25 @@ use Illuminate\Support\Facades\Log;
 
 class OutfitController extends Controller
 {
+    /**
+     * Display the outfit upload form.
+     *
+     * @return void
+     */
     public function index()
     {
         return view('upload');
     }
 
+    /**
+     * Handle the outfit image upload and analysis.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
     public function store(Request $request)
     {
+        // Validate input
         $request->validate([
             'image' => 'required|image|mimes:jpg,jpeg,png|max:4096',
             'crop_x' => 'nullable|numeric',
@@ -25,9 +37,11 @@ class OutfitController extends Controller
             'display_height' => 'nullable|numeric',
         ]);
 
+        // Store the uploaded image
         $path = $request->file('image')->store('outfits', 'public');
         $fullPath = storage_path('app/public/' . $path);
 
+        // Prepare crop data
         $crop = [
             'x' => (float) $request->input('crop_x', 0),
             'y' => (float) $request->input('crop_y', 0),
@@ -37,14 +51,15 @@ class OutfitController extends Controller
             'display_height' => (float) $request->input('display_height', 0),
         ];
 
+        // Create cropped image data for Gemini analysis
         $cropped = $this->createCroppedImageData($fullPath, $crop);
 
+        // Analyze with Gemini and handle response
         try {
-            $analysis = $this->analyzeWithGemini(
-                $cropped['base64'],
-                $cropped['mime_type']
-            );
+            // Log the size of the cropped image data
+            $analysis = $this->analyzeWithGemini($cropped['base64'], $cropped['mime_type']);
 
+            // Log the analysis result for debugging
             return view('result', [
                 'imagePath' => $path,
                 'palette' => $analysis['palette'] ?? [],
@@ -54,117 +69,133 @@ class OutfitController extends Controller
                 'cropPreview' => $cropped['relative_path'],
             ]);
         } catch (\Throwable $e) {
-            Log::error('Gemini analysis failed', [
-                'message' => $e->getMessage(),
-            ]);
-
-            return back()
-                ->withErrors([
-                    'image' => 'Analisis Gemini gagal. Cek API key, kuota, koneksi internet, atau format respons.'
-                ])
-                ->withInput();
+            // Log the error for debugging
+            Log::error('Gemini analysis failed', ['message' => $e->getMessage()]);
+            return back()->withErrors(['image' => 'Analisis Gemini gagal. Cek API key, kuota, koneksi internet, atau format respons.'])->withInput();
         }
     }
 
+    /**
+     * Analyze the outfit image using Gemini API.
+     *
+     * @param  string  $base64Image
+     * @param  string  $mimeType
+     * @return array
+     */
     private function analyzeWithGemini(string $base64Image, string $mimeType): array
     {
+        // Load API key and model from environment variables
         $apiKey = env('GEMINI_API_KEY');
         $model = env('GEMINI_MODEL', 'gemini-2.5-flash');
 
-        if (! $apiKey) {
+        // Validate API key presence
+        if (!$apiKey) {
             throw new \RuntimeException('GEMINI_API_KEY belum diatur di file .env');
         }
 
+        // Construct the prompt for Gemini
         $prompt = <<<PROMPT
-Analisis outfit pada gambar dan balas hanya dalam JSON valid.
+                    Analisis outfit pada gambar dan balas hanya dalam JSON valid.
 
-Keluarkan format:
-{
-  "palette": [
-    { "hex": "#AABBCC", "percentage": 27.5, "label": "Soft Blue" }
-  ],
-  "recommendation": {
-    "main": "#AABBCC",
-    "secondary": "#DDEEFF",
-    "accent": "#112233",
-    "bottom": "text",
-    "shoes": "text",
-    "accessory": "text",
-    "description": "text"
-  },
-  "summary": "text"
-}
+                    Keluarkan format:
+                    {
+                    "palette": [
+                        { "hex": "#AABBCC", "percentage": 27.5, "label": "Soft Blue" }
+                    ],
+                    "recommendation": {
+                        "main": "#AABBCC",
+                        "secondary": "#DDEEFF",
+                        "accent": "#112233",
+                        "bottom": "text",
+                        "shoes": "text",
+                        "accessory": "text",
+                        "description": "text"
+                    },
+                    "summary": "text"
+                    }
 
-Aturan:
-- Fokus pada pakaian di gambar.
-- Identifikasi 5 warna dominan.
-- Persentase 0-100.
-- Label warna harus dinamis sesuai gambar.
-- Rekomendasi kombinasi harus dinamis, bukan template.
-- Jangan tambahkan markdown atau penjelasan di luar JSON.
-PROMPT;
+                    Aturan:
+                    - Fokus pada pakaian di gambar.
+                    - Identifikasi 5 warna dominan.
+                    - Persentase 0-100.
+                    - Label warna harus dinamis sesuai gambar.
+                    - Rekomendasi kombinasi harus dinamis, bukan template.
+                    - Jangan tambahkan markdown atau penjelasan di luar JSON.
+                PROMPT;
 
+        // Send request to Gemini API
         $response = Http::withHeaders([
-    'x-goog-api-key' => $apiKey,
-    'Content-Type' => 'application/json',
-])->timeout(90)->post(
-    "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent",
-    [
-        'contents' => [
-            [
-                'parts' => [
-                    [
-                        'inline_data' => [
-                            'mime_type' => $mimeType,
-                            'data' => $base64Image,
-                        ],
-                    ],
-                    [
-                        'text' => $prompt,
-                    ],
-                ],
-            ],
-        ],
-        'generationConfig' => [
-            'temperature' => 0.1,
-            'maxOutputTokens' => 2200,
-            'responseMimeType' => 'application/json',
-            'thinkingConfig' => [
-                'thinkingBudget' => 0,
-            ],
-        ],
-    ]
-);
+                        'x-goog-api-key' => $apiKey,
+                        'Content-Type' => 'application/json',
+                    ])
+                    ->timeout(90)->post(
+                        "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent",
+                        [
+                            'contents' => [
+                                [
+                                    'parts' => [
+                                        [
+                                            'inline_data' => [
+                                                'mime_type' => $mimeType,
+                                                'data' => $base64Image,
+                                            ],
+                                        ],
+                                        [
+                                            'text' => $prompt,
+                                        ],
+                                    ],
+                                ],
+                            ],
+                            'generationConfig' => [
+                                'temperature' => 0.1,
+                                'maxOutputTokens' => 2200,
+                                'responseMimeType' => 'application/json',
+                                'thinkingConfig' => [
+                                    'thinkingBudget' => 0,
+                                ],
+                            ],
+                        ]
+                    );
 
-        // dd($response->json());
-
+        // Handle response and extract text
         if ($response->failed()) {
             throw new \RuntimeException('Gemini request gagal: ' . $response->body());
         }
 
+        // Log the raw response for debugging
         $json = $response->json();
         $text = $this->extractGeminiText($json);
 
-        if (! $text) {
+        // Log the extracted text for debugging
+        if (!$text) {
             throw new \RuntimeException('Tidak menemukan output teks dari Gemini.');
         }
 
+        // Attempt to decode JSON from the extracted text
         $decoded = $this->decodeJsonSafely($text);
 
-        if (! is_array($decoded)) {
+        // Log the decoded JSON for debugging
+        if (!is_array($decoded)) {
             throw new \RuntimeException('Output Gemini bukan JSON valid.');
         }
 
         return $this->normalizeAnalysis($decoded);
     }
 
+    /**
+     * Extract the text content from Gemini response.
+     *
+     * @param  array  $response
+     * @return string|null
+     */
     private function extractGeminiText(array $response): ?string
     {
+        // Log the structure of the response for debugging
         $candidates = $response['candidates'] ?? [];
 
+        // Gemini will return the generated content in the 'parts' array of the first candidate
         foreach ($candidates as $candidate) {
             $parts = data_get($candidate, 'content.parts', []);
-
             foreach ($parts as $part) {
                 if (! empty($part['text'])) {
                     return trim($part['text']);
@@ -175,17 +206,23 @@ PROMPT;
         return null;
     }
 
+    /**
+     * Attempt to decode JSON from text, with fallback for extraneous content.
+     *
+     * @param  string  $text
+     * @return array|null
+     */
     private function decodeJsonSafely(string $text): ?array
     {
+        // First attempt to decode the entire text
         $decoded = json_decode($text, true);
-
         if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
             return $decoded;
         }
 
+        // If that fails, try to extract JSON substring using regex
         if (preg_match('/\{.*\}/s', $text, $matches)) {
             $decoded = json_decode($matches[0], true);
-
             if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
                 return $decoded;
             }
@@ -194,27 +231,36 @@ PROMPT;
         return null;
     }
 
+    /**
+     * Normalize the analysis data to ensure consistent structure and formatting.
+     *
+     * @param  array  $data
+     * @return array
+     */
     private function normalizeAnalysis(array $data): array
     {
+        // Normalize palette data
         $palette = collect($data['palette'] ?? [])
-            ->filter(fn ($item) => is_array($item) && ! empty($item['hex']))
-            ->map(function ($item) {
-                $hex = strtoupper(trim((string) ($item['hex'] ?? '')));
-                $percentage = (float) ($item['percentage'] ?? 0);
-                $label = trim((string) ($item['label'] ?? 'Color'));
+                    ->filter(fn ($item) => is_array($item) && ! empty($item['hex']))
+                    ->map(function ($item) {
+                        $hex = strtoupper(trim((string) ($item['hex'] ?? '')));
+                        $percentage = (float) ($item['percentage'] ?? 0);
+                        $label = trim((string) ($item['label'] ?? 'Color'));
 
-                return [
-                    'hex' => $this->normalizeHex($hex),
-                    'percentage' => round($percentage, 2),
-                    'label' => $label !== '' ? $label : 'Color',
-                ];
-            })
-            ->sortByDesc('percentage')
-            ->values()
-            ->all();
+                        return [
+                            'hex' => $this->normalizeHex($hex),
+                            'percentage' => round($percentage, 2),
+                            'label' => $label !== '' ? $label : 'Color',
+                        ];
+                    })
+                    ->sortByDesc('percentage')
+                    ->values()
+                    ->all();
 
+        // Normalize recommendation data
         $recommendation = $data['recommendation'] ?? [];
 
+        // Ensure all recommendation fields are present and properly formatted
         return [
             'palette' => $palette,
             'recommendation' => [
@@ -230,14 +276,21 @@ PROMPT;
         ];
     }
 
+    /**
+     * Normalize a hex color code to ensure it's in the format #RRGGBB.
+     *
+     * @param  string  $hex
+     * @return string
+     */
     private function normalizeHex(string $hex): string
     {
+        // Remove any leading '#' and convert to uppercase
         $hex = ltrim($hex, '#');
-
         if (strlen($hex) === 3) {
             $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
         }
 
+        // Validate that it's a valid 6-character hex code
         if (! preg_match('/^[0-9A-Fa-f]{6}$/', $hex)) {
             return '#000000';
         }
@@ -245,6 +298,12 @@ PROMPT;
         return '#' . strtoupper($hex);
     }
 
+    /**
+     * Normalize a nullable hex color code, returning null if input is empty or invalid.
+     *
+     * @param  string|null  $hex
+     * @return string|null
+     */
     private function normalizeNullableHex(?string $hex): ?string
     {
         if (! $hex) {
@@ -254,16 +313,23 @@ PROMPT;
         return $this->normalizeHex($hex);
     }
 
+    /**
+     * Create cropped image data from the original image and crop parameters.
+     *
+     * @param  string  $imagePath
+     * @param  array  $crop
+     * @return array
+     */
     private function createCroppedImageData(string $imagePath, array $crop): array
     {
+        // Get image info and create source image resource
         $imageInfo = \getimagesize($imagePath);
-
-        if (! $imageInfo) {
+        if (!$imageInfo) {
             throw new \RuntimeException('Gagal membaca file gambar.');
         }
 
+        // Log the image info for debugging
         $mime = $imageInfo['mime'];
-
         switch ($mime) {
             case 'image/jpeg':
                 $sourceImage = \imagecreatefromjpeg($imagePath);
@@ -277,56 +343,54 @@ PROMPT;
                 throw new \RuntimeException('Format gambar tidak didukung.');
         }
 
-        if (! $sourceImage) {
+        // Log the source image creation for debugging
+        if (!$sourceImage) {
             throw new \RuntimeException('Gagal memproses gambar.');
         }
 
+        // Get original dimensions and calculate crop area
         $originalWidth = \imagesx($sourceImage);
         $originalHeight = \imagesy($sourceImage);
+        [$srcX, $srcY, $srcWidth, $srcHeight] = $this->resolveCropArea($originalWidth, $originalHeight, $crop);
 
-        [$srcX, $srcY, $srcWidth, $srcHeight] = $this->resolveCropArea(
-            $originalWidth,
-            $originalHeight,
-            $crop
-        );
-
+        // Log the resolved crop area for debugging
         $croppedImage = \imagecreatetruecolor($srcWidth, $srcHeight);
 
-        \imagecopy(
-            $croppedImage,
-            $sourceImage,
-            0,
-            0,
-            $srcX,
-            $srcY,
-            $srcWidth,
-            $srcHeight
-        );
+        // Preserve transparency for PNG
+        \imagecopy($croppedImage, $sourceImage, 0, 0, $srcX, $srcY, $srcWidth, $srcHeight);
 
+        // Save the cropped image to a temporary location
         $relativeDir = 'cropped';
         $absoluteDir = storage_path('app/public/' . $relativeDir);
 
-        if (! is_dir($absoluteDir)) {
+        // Ensure the directory exists
+        if (!is_dir($absoluteDir)) {
             mkdir($absoluteDir, 0755, true);
         }
 
+        // Generate a unique filename for the cropped image
         $filename = 'crop_' . uniqid() . '.png';
         $absolutePath = $absoluteDir . '/' . $filename;
         $relativePath = $relativeDir . '/' . $filename;
 
+        // Save the cropped image as PNG
         \imagepng($croppedImage, $absolutePath);
 
+        // Capture the binary data of the cropped image for Gemini analysis
         ob_start();
         \imagepng($croppedImage);
         $binary = ob_get_clean();
 
+        // Clean up image resources
         \imagedestroy($sourceImage);
         \imagedestroy($croppedImage);
 
+        // Log the size of the cropped image data for debugging
         if ($binary === false) {
             throw new \RuntimeException('Gagal membuat data gambar crop.');
         }
 
+        // Return the base64-encoded cropped image data along with MIME type and relative path
         return [
             'base64' => base64_encode($binary),
             'mime_type' => $outputMime,
@@ -334,8 +398,17 @@ PROMPT;
         ];
     }
 
+    /**
+     * Resolve the crop area based on original dimensions and crop parameters, with fallback.
+     *
+     * @param  int  $originalWidth
+     * @param  int  $originalHeight
+     * @param  array  $crop
+     * @return array
+     */
     private function resolveCropArea(int $originalWidth, int $originalHeight, array $crop): array
     {
+        // Log the crop parameters for debugging
         $displayWidth = (float) ($crop['display_width'] ?? 0);
         $displayHeight = (float) ($crop['display_height'] ?? 0);
         $cropX = (float) ($crop['x'] ?? 0);
@@ -343,10 +416,8 @@ PROMPT;
         $cropWidth = (float) ($crop['width'] ?? 0);
         $cropHeight = (float) ($crop['height'] ?? 0);
 
-        if (
-            $displayWidth <= 0 || $displayHeight <= 0 ||
-            $cropWidth <= 0 || $cropHeight <= 0
-        ) {
+        // If any of the crop parameters are invalid, use a centered crop area as fallback
+        if ($displayWidth <= 0 || $displayHeight <= 0 || $cropWidth <= 0 || $cropHeight <= 0) {
             $fallbackWidth = (int) round($originalWidth * 0.55);
             $fallbackHeight = (int) round($originalHeight * 0.7);
             $fallbackX = (int) round(($originalWidth - $fallbackWidth) / 2);
@@ -355,18 +426,22 @@ PROMPT;
             return [$fallbackX, $fallbackY, $fallbackWidth, $fallbackHeight];
         }
 
+        // Calculate the scaling factors to convert display crop coordinates to original image coordinates
         $scaleX = $originalWidth / $displayWidth;
         $scaleY = $originalHeight / $displayHeight;
 
+        // Calculate the source crop area in original image coordinates
         $srcX = max(0, (int) round($cropX * $scaleX));
         $srcY = max(0, (int) round($cropY * $scaleY));
         $srcWidth = max(1, (int) round($cropWidth * $scaleX));
         $srcHeight = max(1, (int) round($cropHeight * $scaleY));
 
+        // Ensure the crop area does not exceed the original image boundaries
         if ($srcX + $srcWidth > $originalWidth) {
             $srcWidth = $originalWidth - $srcX;
         }
 
+        // Ensure the crop area does not exceed the original image boundaries
         if ($srcY + $srcHeight > $originalHeight) {
             $srcHeight = $originalHeight - $srcY;
         }
