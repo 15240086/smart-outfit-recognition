@@ -153,7 +153,7 @@
                 <!--begin::Brand Title-->
                 <h1 class="text-lg font-title tracking-wide">
                     <!--begin::Brand Primary-->
-                    <span style="color:#73A5CA;">Upload</span>
+                    <span style="color:#73A5CA;">Color</span>
                     <!--end::Brand Primary-->
                     <!--begin::Brand Secondary-->
                     <span style="color:#E87F24;">Outfit</span>
