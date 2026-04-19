@@ -306,7 +306,7 @@
                 <!--begin::Team Member-->
                 <div class="team-card">
                     <div class="team-photo-wrap">
-                        <img src="{{ asset('assets/images/profile-4.jpg') }}" class="team-img">
+                        <img src="{{ asset('assets/images/profile-4.webp') }}" class="team-img">
                     </div>
                     <p class="team-nim">15240681</p>
                     <p class="team-name">Muhammad Rivan Aldiansyah</p>
