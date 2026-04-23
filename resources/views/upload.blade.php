@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Outfit</title>
+    <title>FitScan - Smart Outfit Recognition</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -153,10 +153,10 @@
                 <!--begin::Brand Title-->
                 <h1 class="text-lg font-title tracking-wide">
                     <!--begin::Brand Primary-->
-                    <span style="color:#73A5CA;">Color</span>
+                    <span style="color:#73A5CA;">FitScan</span>
                     <!--end::Brand Primary-->
                     <!--begin::Brand Secondary-->
-                    <span style="color:#E87F24;">Outfit</span>
+                    <span style="color:#E87F24;">AI</span>
                     <!--end::Brand Secondary-->
                 </h1>
                 <!--end::Brand Title-->
@@ -168,7 +168,7 @@
                 <span>←</span>
                 <!--end::Back Link Icon-->
                 <!--begin::Back Link Text-->
-                <span>Kembali ke Home</span>
+                <span>Kembali ke Beranda</span>
                 <!--end::Back Link Text-->
             </a>
             <!--end::Back Link-->
@@ -189,12 +189,12 @@
                     <div class="mb-6">
                         <!--begin::Title-->
                         <h2 class="text-xl font-elegant font-semibold mb-2" style="color:#E87F24;">
-                            Input Gambar
+                            Unggah Gambar
                         </h2>
                         <!--end::Title-->
                         <!--begin::Description-->
                         <p class="text-sm text-gray-600 leading-relaxed">
-                            Pilih sumber gambar terlebih dahulu, lalu siapkan area outfit agar proses analisis warna menjadi lebih akurat.
+                            Pilih sumber gambar terlebih dahulu, lalu siapkan foto outfit agar sistem dapat mengidentifikasi jenis pakaian yang dikenakan dengan lebih akurat.
                         </p>
                         <!--end::Description-->
                         <!--begin::Divider-->
@@ -226,7 +226,7 @@
                             <!--end::Step Title-->
                             <!--begin::Main Button-->
                             <button type="button" id="openSourcePickerBtn" class="w-full px-4 py-3 rounded-2xl text-sm font-medium theme-btn-primary">
-                                Upload
+                                Unggah
                             </button>
                             <!--end::Main Button-->
                             <!--begin::Options-->
@@ -238,7 +238,7 @@
                                 <!--end::Camera Btn-->
                                 <!--begin::Upload Btn-->
                                 <button type="button" id="tabUpload" class="px-4 py-3 rounded-2xl camera-btn-secondary text-sm font-medium transition">
-                                    Pilih dari Komputer
+                                    Pilih dari Perangkat
                                 </button>
                                 <!--end::Upload Btn-->
                             </div>
@@ -266,7 +266,7 @@
                                 <!--end::Tips Title-->
                                 <!--begin::Tips Text-->
                                 <p class="text-sm" style="color:#7c5a00;">
-                                    Gunakan foto yang fokus ke outfit agar warna yang dianalisis tidak tercampur dengan background.
+                                    Gunakan foto yang fokus ke outfit agar sistem dapat mengidentifikasi jenis pakaian dengan lebih akurat.
                                 </p>
                                 <!--end::Tips Text-->
                             </div>
@@ -379,7 +379,7 @@
                             <div id="loadingHint" class="hidden blue-box p-4 mt-3">
                                 <p class="text-sm font-medium mb-1" style="color:#1e3a5f;">AI sedang menganalisis gambar</p>
                                 <p class="text-sm" style="color:#315d89;">
-                                    Mohon tunggu beberapa saat. Sistem sedang memproses area crop, membaca palette warna, dan menyusun rekomendasi outfit.
+                                    Mohon tunggu beberapa saat. Sistem sedang memproses gambar dan mengidentifikasi jenis outfit yang terdeteksi.
                                 </p>
                             </div>
                             <!--end::Loading Hint-->

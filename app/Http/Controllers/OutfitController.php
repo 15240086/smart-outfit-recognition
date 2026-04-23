@@ -62,9 +62,7 @@ class OutfitController extends Controller
             // Log the analysis result for debugging
             return view('result', [
                 'imagePath' => $path,
-                'palette' => $analysis['palette'] ?? [],
-                'topColors' => array_slice($analysis['palette'] ?? [], 0, 3),
-                'recommendation' => $analysis['recommendation'] ?? [],
+                'outfits' => $analysis['outfits'] ?? [],
                 'summary' => $analysis['summary'] ?? null,
                 'cropPreview' => $cropped['relative_path'],
             ]);
@@ -95,33 +93,32 @@ class OutfitController extends Controller
 
         // Construct the prompt for Gemini
         $prompt = <<<PROMPT
-                    Analisis outfit pada gambar dan balas hanya dalam JSON valid.
+                    Gambar ini adalah hasil crop yang hanya berisi area outfit.
+                    Analisis hanya pakaian yang terlihat pada gambar ini dan abaikan bagian di luar crop.
+
+                    Balas hanya dalam JSON valid.
 
                     Keluarkan format:
                     {
-                    "palette": [
-                        { "hex": "#AABBCC", "percentage": 27.5, "label": "Soft Blue" }
-                    ],
-                    "recommendation": {
-                        "main": "#AABBCC",
-                        "secondary": "#DDEEFF",
-                        "accent": "#112233",
-                        "bottom": "text",
-                        "shoes": "text",
-                        "accessory": "text",
-                        "description": "text"
-                    },
-                    "summary": "text"
+                        "outfits": [
+                            { "type": "Jaket", "category": "outerwear", "percentage": 55 },
+                            { "type": "Kaos", "category": "top", "percentage": 25 },
+                            { "type": "Celana Jeans", "category": "bottom", "percentage": 15 },
+                            { "type": "Sepatu", "category": "footwear", "percentage": 5 }
+                        ],
+                        "summary": "text"
                     }
 
                     Aturan:
-                    - Fokus pada pakaian di gambar.
-                    - Identifikasi 5 warna dominan.
-                    - Persentase 0-100.
-                    - Label warna harus dinamis sesuai gambar.
-                    - Rekomendasi kombinasi harus dinamis, bukan template.
-                    - Jangan tambahkan markdown atau penjelasan di luar JSON.
-                PROMPT;
+                    - Analisis hanya outfit yang terlihat pada gambar crop ini
+                    - Jangan mengasumsikan pakaian di luar gambar
+                    - Identifikasi semua jenis outfit yang terlihat
+                    - Setiap jenis outfit memiliki nilai 0-100
+                    - Total seluruh nilai harus 100
+                    - Berdasarkan dominasi visual pada gambar
+                    - Gunakan bahasa Indonesia untuk nama outfit
+                    - Jangan tambahkan markdown atau teks di luar JSON
+                    PROMPT;
 
         // Send request to Gemini API
         $response = Http::withHeaders([
@@ -239,39 +236,21 @@ class OutfitController extends Controller
      */
     private function normalizeAnalysis(array $data): array
     {
-        // Normalize palette data
-        $palette = collect($data['palette'] ?? [])
-                    ->filter(fn ($item) => is_array($item) && ! empty($item['hex']))
+        $outfits = collect($data['outfits'] ?? [])
+                    ->filter(fn ($item) => is_array($item) && !empty($item['type']))
                     ->map(function ($item) {
-                        $hex = strtoupper(trim((string) ($item['hex'] ?? '')));
-                        $percentage = (float) ($item['percentage'] ?? 0);
-                        $label = trim((string) ($item['label'] ?? 'Color'));
-
                         return [
-                            'hex' => $this->normalizeHex($hex),
-                            'percentage' => round($percentage, 2),
-                            'label' => $label !== '' ? $label : 'Color',
+                            'type' => trim((string) ($item['type'] ?? 'Unknown')),
+                            'category' => trim((string) ($item['category'] ?? '')),
+                            'percentage' => round((float) ($item['percentage'] ?? 0), 2),
                         ];
                     })
                     ->sortByDesc('percentage')
                     ->values()
                     ->all();
 
-        // Normalize recommendation data
-        $recommendation = $data['recommendation'] ?? [];
-
-        // Ensure all recommendation fields are present and properly formatted
         return [
-            'palette' => $palette,
-            'recommendation' => [
-                'main' => $this->normalizeNullableHex($recommendation['main'] ?? null),
-                'secondary' => $this->normalizeNullableHex($recommendation['secondary'] ?? null),
-                'accent' => $this->normalizeNullableHex($recommendation['accent'] ?? null),
-                'bottom' => (string) ($recommendation['bottom'] ?? '-'),
-                'shoes' => (string) ($recommendation['shoes'] ?? '-'),
-                'accessory' => (string) ($recommendation['accessory'] ?? '-'),
-                'description' => (string) ($recommendation['description'] ?? '-'),
-            ],
+            'outfits' => $outfits,
             'summary' => (string) ($data['summary'] ?? ''),
         ];
     }

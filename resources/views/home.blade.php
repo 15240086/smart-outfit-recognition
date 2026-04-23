@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Color Outfit Recommendation</title>
+    <title>FitScan - Smart Outfit Recognition</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
         html {
             scroll-behavior: smooth;
         }
-        
+
         .font-title {
             font-family: "Bungee", sans-serif;
         }
@@ -116,10 +116,10 @@
                 <!--begin::Header Title-->
                 <h1 class="text-xl font-title tracking-wide">
                     <!--begin::Title Primary-->
-                    <span class="text-[#73A5CA]">Color</span>
+                    <span class="text-[#73A5CA]">FitScan</span>
                     <!--end::Title Primary-->
                     <!--begin::Title Secondary-->
-                    <span class="text-[#E87F24]">Outfit</span>
+                    <span class="text-[#E87F24]">AI</span>
                     <!--end::Title Secondary-->
                 </h1>
                 <!--end::Header Title-->
@@ -128,19 +128,19 @@
             <!--begin::Header Menu-->
             <nav class="hidden md:flex items-center gap-10 text-sm font-elegant text-gray-800">
                 <!--begin::Menu Item-->
-                <a href="#home" class="nav-link">HOME</a>
+                <a href="#home" class="nav-link">BERANDA</a>
                 <!--end::Menu Item-->
                 <!--begin::Menu Item-->
-                <a href="#about" class="nav-link">ABOUT</a>
+                <a href="#about" class="nav-link">TENTANG</a>
                 <!--end::Menu Item-->
                 <!--begin::Menu Item-->
-                <a href="#team" class="nav-link">TEAM</a>
+                <a href="#team" class="nav-link">TIM</a>
                 <!--end::Menu Item-->
             </nav>
             <!--end::Header Menu-->
             <!--begin::Header Action-->
             <a href="{{ route('upload') }}" class="inline-flex items-center px-5 py-2 rounded-xl bg-[#E87F24] text-white text-sm font-medium shadow-sm hover:bg-[#FFC81E] hover:text-gray-900 transition">
-                Upload Gambar
+                Unggah Gambar
             </a>
             <!--end::Header Action-->
         </div>
@@ -164,20 +164,20 @@
         <div class="relative max-w-4xl mx-auto px-6 text-center">
             <!--begin::Hero Title-->
             <h2 class="text-3xl md:text-4xl leading-tight tracking-tight mb-6 font-title">
-                <span class="text-[#FFC81E]">Analisis warna</span><br>
-                <span class="text-[#E87F24]">outfit dari gambar</span><br>
+                <span class="text-[#FFC81E]">Identifikasi jenis outfit</span><br>
+                <span class="text-[#E87F24]">langsung dari gambar</span><br>
                 <span class="text-white">dengan tampilan yang sederhana dan rapi</span>
             </h2>
             <!--end::Hero Title-->
             <!--begin::Hero Description-->
             <p class="text-gray-200 text-lg leading-relaxed mb-10 max-w-xl mx-auto">
-                Aplikasi ini membantu pengguna melihat warna dominan dari outfit yang diupload, kemudian menampilkan palette warna serta rekomendasi kombinasi yang sesuai.
+                Unggah gambar dan sistem AI akan menganalisis jenis pakaian yang dikenakan. Hasil analisis menampilkan outfit yang terdeteksi beserta tingkat dominasinya secara otomatis.
             </p>
             <!--end::Hero Description-->
             <!--begin::Hero Actions-->
             <div class="flex flex-wrap justify-center gap-4">
                 <!--begin::Primary Button-->
-                <a href="{{ route('upload') }}" class="px-6 py-3 rounded-xl text-white font-medium transition" style="background-color:#E87F24;" onmouseover="this.style.backgroundColor='#FFC81E'; this.style.color='#1f2937';" onmouseout="this.style.backgroundColor='#E87F24'; this.style.color='white';">     
+                <a href="{{ route('upload') }}" class="px-6 py-3 rounded-xl text-white font-medium transition" style="background-color:#E87F24;" onmouseover="this.style.backgroundColor='#FFC81E'; this.style.color='#1f2937';" onmouseout="this.style.backgroundColor='#E87F24'; this.style.color='white';">
                     Mulai Analisis
                 </a>
                 <!--end::Primary Button-->
@@ -207,7 +207,7 @@
                 <div>
                     <!--begin::Section Title-->
                     <h3 class="text-3xl md:text-4xl mb-6 font-title relative inline-block" style="color:#E87F24;">
-                        About
+                        Tentang
                         <!--begin::Title Underline-->
                         <span class="block h-[4px] w-20 mt-2 rounded-full" style="background:linear-gradient(to right,#E87F24,#FFC81E,#73A5CA);"></span>
                         <!--end::Title Underline-->
@@ -215,13 +215,13 @@
                     <!--end::Section Title-->
                     <!--begin::Section Description-->
                     <p class="leading-relaxed mb-4 text-lg" style="color:#374151;">
-                        Website ini dirancang untuk membantu pengguna menganalisis warna outfit dari gambar yang diunggah. Pengguna dapat memilih area tertentu pada gambar agar proses analisis lebih fokus pada bagian pakaian yang ingin diperiksa.
+                        Website ini dirancang untuk membantu pengguna mengidentifikasi jenis outfit dari gambar yang diunggah. Pengguna dapat mengambil foto secara langsung atau mengunggah gambar, lalu sistem akan menganalisis pakaian yang dikenakan pada gambar tersebut.
                     </p>
                     <p class="leading-relaxed mb-4 text-lg" style="color:#374151;">
-                        Setelah gambar diproses, sistem akan mengekstrak warna dominan dari outfit, lalu menampilkan palette warna utama beserta rekomendasi kombinasi warna yang serasi. Dengan begitu, pengguna bisa lebih mudah memahami kecocokan warna outfit secara visual.
+                        Setelah gambar diproses, sistem akan mendeteksi berbagai jenis pakaian seperti jaket, kaos, kemeja, celana, dan lainnya. Hasil analisis ditampilkan dalam bentuk tingkat dominasi setiap outfit yang terdeteksi sehingga pengguna dapat memahami komposisi pakaian yang dikenakan dengan lebih jelas.
                     </p>
                     <p class="leading-relaxed text-lg" style="color:#374151;">
-                        Website ini dibangun menggunakan Laravel sebagai backend dan memanfaatkan GeminiAI API untuk membantu proses analisis serta menghasilkan rekomendasi warna yang lebih dinamis dan relevan.
+                        Website ini dibangun menggunakan Laravel sebagai backend dan memanfaatkan Gemini AI API untuk membantu proses identifikasi gambar secara otomatis. Teknologi ini memungkinkan analisis outfit dilakukan secara cepat, dinamis, dan akurat berdasarkan gambar yang diunggah pengguna.
                     </p>
                     <!--end::Section Description-->
                 </div>
@@ -257,7 +257,7 @@
             <div class="mb-14 text-center">
                 <!--begin::Section Title-->
                 <h3 class="text-3xl md:text-4xl font-title mb-3" style="color:#E87F24;">
-                    TEAM MEMBERS
+                    Tim Pengembang
                 </h3>
                 <!--end::Section Title-->
                 <!--begin::Section Subtitle-->
@@ -334,20 +334,20 @@
         <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <!--begin::Copyright-->
             <p class="text-sm opacity-90">
-                © 2026 
-                AI <span class="font-title text-[#FFC81E]">Color Outfit</span> Recommendation
+                © 2026
+                AI <span class="font-title text-[#FFC81E]">FitScan</span> - All rights reserved.
             </p>
             <!--end::Copyright-->
             <!--begin::Footer Navigation-->
             <div class="flex gap-6 text-sm font-elegant tracking-wide">
                 <!--begin::Nav Item-->
-                <a href="#home" class="hover:text-[#FFC81E] transition">HOME</a>
+                <a href="#home" class="hover:text-[#FFC81E] transition">BERANDA</a>
                 <!--end::Nav Item-->
                 <!--begin::Nav Item-->
-                <a href="#about" class="hover:text-[#FFC81E] transition">ABOUT</a>
+                <a href="#about" class="hover:text-[#FFC81E] transition">TENTANG</a>
                 <!--end::Nav Item-->
                 <!--begin::Nav Item-->
-                <a href="#team" class="hover:text-[#FFC81E] transition">TEAM</a>
+                <a href="#team" class="hover:text-[#FFC81E] transition">TIM</a>
                 <!--end::Nav Item-->
             </div>
             <!--end::Footer Navigation-->
