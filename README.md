@@ -1,23 +1,12 @@
-# AI Color Outfit Recommendation
+# Smart Outfit Recognition AI
 
-Aplikasi web sederhana untuk memberikan rekomendasi warna outfit menggunakan AI.
+Aplikasi berbasis AI untuk mengidentifikasi jenis outfit dari gambar. Sistem akan menganalisis pakaian yang dikenakan dan menampilkan dominasi setiap jenis outfit secara otomatis.
 
-## Deskripsi
+## ✨ Fitur
 
-Aplikasi ini memungkinkan pengguna mengupload gambar outfit, kemudian sistem akan menganalisis warna dominan dan memberikan rekomendasi kombinasi warna yang sesuai.
-
-## Teknologi
-
-- Laravel
-- Tailwind CSS
-- AI API
-
-## Fitur
-
-- Upload gambar outfit
-- Analisis warna
-- Rekomendasi warna outfit
-
-## Tujuan
-
-Proyek ini dibuat untuk tugas kelompok mata kuliah Data Sains.
+- Upload gambar atau ambil foto langsung
+- Crop area outfit yang ingin dianalisis
+- Identifikasi jenis pakaian (jaket, kaos, kemeja, dll)
+- Menampilkan dominasi setiap outfit
+- Ringkasan hasil analisis otomatis
+- Menggunakan Gemini AI untuk image understanding
