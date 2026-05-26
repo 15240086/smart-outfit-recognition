@@ -311,7 +311,7 @@
                         <!--end::Card Header-->
                         <!--begin::Image Wrapper-->
                         <div class="image-frame">
-                            <img src="{{ asset('storage/' . $cropPreview) }}" alt="Cropped Outfit" class="w-full">
+                            <img src="http://127.0.0.1:9000/{{ $cropPreview }}" alt="Cropped Outfit" class="w-full">
                         </div>
                         <!--end::Image Wrapper-->
                     </div>
@@ -362,7 +362,9 @@
                                 <!--begin::Outfit Info-->
                                 <div>
                                     <!--begin::Outfit Name-->
-                                    <p class="outfit-chip-name">{{ $item['type'] }}</p>
+                                    <p class="outfit-chip-name">
+                                        {{ ucfirst($item['type']) }}
+                                    </p>
                                     <!--end::Outfit Name-->
                                     <!--begin::Outfit Sub-->
                                     <p class="outfit-chip-sub">{{ $item['category'] ?? 'Casual / Formal Wear' }}</p>
@@ -422,7 +424,7 @@
                                 </p>
 
                                 <p class="outfit-chip-sub">
-                                    {{ $recommendation['style'] ?? '-' }}
+                                    {{ ucfirst($recommendation['style'] ?? '-') }}
                                 </p>
                             </div>
                         </div>
@@ -488,7 +490,9 @@
                             </svg>
                             <!--end::Summary Icon-->
                             <!--begin::Summary Text-->
-                            <p class="summary-box-text">{{ $summary }}</p>
+                            <p class="summary-box-text">
+                                {{ ucfirst($summary) }}
+                            </p>
                             <!--end::Summary Text-->
                         </div>
                         <!--end::Summary Box-->

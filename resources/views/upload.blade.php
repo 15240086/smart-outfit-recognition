@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FitScan - Smart Outfit Recognition</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -735,15 +736,6 @@
                         </div>
                         <!--end::Camera Mode-->
 
-                        <!--begin::Hidden Inputs-->
-                        <input type="hidden" name="crop_x" id="crop_x">
-                        <input type="hidden" name="crop_y" id="crop_y">
-                        <input type="hidden" name="crop_width" id="crop_width">
-                        <input type="hidden" name="crop_height" id="crop_height">
-                        <input type="hidden" name="display_width" id="display_width">
-                        <input type="hidden" name="display_height" id="display_height">
-                        <!--end::Hidden Inputs-->
-
                         <!--begin::Step 3 - Crop Instruction-->
                         <div class="step-block">
                             <!--begin::Step Header-->
@@ -761,6 +753,12 @@
                             <!--end::Instruction List-->
                         </div>
                         <!--end::Step 3-->
+
+                        <input
+                            type="hidden"
+                            name="cropped_image"
+                            id="cropped_image"
+                        >
 
                         <!--begin::Submit Section-->
                         <div>
@@ -893,55 +891,6 @@
     <!--end::Main-->
 
     <script>
-        // Handle page show event to reset state when navigating back
-        window.addEventListener('pageshow', function (event) {
-            const isBackForward =
-                event.persisted ||
-                window.performance.navigation.type === 2;
-
-            if (isBackForward) {
-
-                // Clear file input
-                if (imageInput) {
-                    imageInput.value = '';
-                }
-
-                // Reset preview image
-                if (previewImage) {
-                    previewImage.src = '';
-                }
-
-                // Hide preview section
-                if (previewSection) {
-                    previewSection.classList.add('hidden');
-                }
-
-                // Show empty state
-                if (emptyState) {
-                    emptyState.classList.remove('hidden');
-                }
-
-                // Reset crop box
-                if (cropBox) {
-                    cropBox.classList.add('hidden');
-                }
-
-                // Reset crop values
-                cropXInput.value = '';
-                cropYInput.value = '';
-                cropWidthInput.value = '';
-                cropHeightInput.value = '';
-                displayWidthInput.value = '';
-                displayHeightInput.value = '';
-
-                // Stop camera
-                stopCamera();
-
-                // Hard reload
-                window.location.reload();
-            }
-        });
-
         // Get all necessary DOM elements
         const uploadForm = document.getElementById('uploadForm');
         const submitButton = document.getElementById('submitButton');
@@ -959,13 +908,6 @@
         const statusChip = document.getElementById('statusChip');
         const cropStatusChip = document.getElementById('cropStatusChip');
         const cropStatusText = document.getElementById('cropStatusText');
-
-        const cropXInput = document.getElementById('crop_x');
-        const cropYInput = document.getElementById('crop_y');
-        const cropWidthInput = document.getElementById('crop_width');
-        const cropHeightInput = document.getElementById('crop_height');
-        const displayWidthInput = document.getElementById('display_width');
-        const displayHeightInput = document.getElementById('display_height');
 
         const tabUpload = document.getElementById('tabUpload');
         const tabCamera = document.getElementById('tabCamera');
@@ -1065,24 +1007,12 @@
         tabCamera.addEventListener('click', switchToCameraMode);
         tabDevice.addEventListener('click', switchToDeviceMode);
 
-        // Crop box functions
-        function updateCropInputs() {
-            cropXInput.value = boxX;
-            cropYInput.value = boxY;
-            cropWidthInput.value = boxWidth;
-            cropHeightInput.value = boxHeight;
-            displayWidthInput.value = previewImage.clientWidth;
-            displayHeightInput.value = previewImage.clientHeight;
-        }
-
         // Render crop box position and size
         function renderCropBox() {
             cropBox.style.left = boxX + 'px';
             cropBox.style.top = boxY + 'px';
             cropBox.style.width = boxWidth + 'px';
             cropBox.style.height = boxHeight + 'px';
-
-            updateCropInputs();
 
             if (cropStatusChip) {
                 cropStatusChip.textContent = 'Crop siap';
@@ -1204,7 +1134,12 @@
                 const file = new File([blob], 'camera-capture.png', { type: 'image/png' });
                 const dataTransfer = new DataTransfer();
                 dataTransfer.items.add(file);
-                imageInput.files = dataTransfer.files;
+                const croppedInput = document.getElementById('cropped_image');
+                croppedInput.value =
+                    cameraCanvas.toDataURL(
+                        'image/webp',
+                        0.6
+                    );
 
                 const previewUrl = URL.createObjectURL(blob);
                 showPreviewFromSrc(previewUrl, 'Foto dari kamera berhasil diambil dan siap dianalisis.');
@@ -1310,38 +1245,142 @@
         });
 
         // Form submission handler
-        uploadForm.addEventListener('submit', function (e) {
-            // Prevent multiple submissions
+        uploadForm.addEventListener('submit', async function (e) {
+
+            e.preventDefault();
+
             if (isSubmitting) {
-                e.preventDefault();
                 return;
             }
 
-            // Validate that an image has been selected
             if (!imageInput.files.length) {
-                alert('Pilih gambar atau ambil foto dulu.');
-                e.preventDefault();
+                alert('Pilih gambar dulu');
                 return;
             }
 
             isSubmitting = true;
+
             submitButton.disabled = true;
-            submitButton.classList.add('opacity-80', 'cursor-not-allowed');
-            submitText.textContent = 'Sedang menganalisis...';
+
             submitSpinner.classList.remove('hidden');
+
+            submitText.textContent =
+                'Sedang menganalisis...';
+
             loadingHint.classList.remove('hidden');
-            stopCamera();
-        });
 
-        // Clean up camera stream when navigating away
-        window.addEventListener('beforeunload', function () {
-            stopCamera();
-        });
+            const canvas =
+                document.createElement('canvas');
 
-        // Initialize page with all modes hidden
-        uploadMode.classList.add('hidden');
-        cameraMode.classList.add('hidden');
-        subBtnRow.style.display = 'none';
+            const scaleX =
+                previewImage.naturalWidth /
+                previewImage.clientWidth;
+
+            const scaleY =
+                previewImage.naturalHeight /
+                previewImage.clientHeight;
+
+            const cropX =
+                parseFloat(cropBox.style.left);
+
+            const cropY =
+                parseFloat(cropBox.style.top);
+
+            const cropWidth =
+                cropBox.offsetWidth;
+
+            const cropHeight =
+                cropBox.offsetHeight;
+
+            canvas.width =
+                cropWidth * scaleX;
+
+            canvas.height =
+                cropHeight * scaleY;
+
+            const ctx =
+                canvas.getContext('2d');
+
+            ctx.drawImage(
+                previewImage,
+
+                cropX * scaleX,
+                cropY * scaleY,
+
+                cropWidth * scaleX,
+                cropHeight * scaleY,
+
+                0,
+                0,
+
+                canvas.width,
+                canvas.height
+            );
+
+            canvas.toBlob(async function(blob) {
+
+                const formData = new FormData();
+
+                formData.append(
+                    'original_image',
+                    imageInput.files[0]
+                );
+
+                formData.append(
+                    'image',
+                    imageInput.files[0]
+                );
+
+                formData.append(
+                    'cropped_image',
+                    canvas.toDataURL(
+                        'image/webp',
+                        0.6
+                    )
+                );
+
+                try {
+
+                    const response = await fetch(
+                        uploadForm.action,
+                        {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-CSRF-TOKEN':
+                                    document.querySelector(
+                                        'meta[name="csrf-token"]'
+                                    ).content
+                            }
+                        }
+                    );
+
+                    const html = await response.text();
+
+                    document.open();
+                    document.write(html);
+                    document.close();
+
+                } catch(error) {
+
+                    console.error(error);
+
+                    alert(error);
+
+                    isSubmitting = false;
+
+                    submitButton.disabled = false;
+
+                    submitSpinner.classList.add('hidden');
+
+                    loadingHint.classList.add('hidden');
+
+                    submitText.textContent =
+                        'Analisis Gambar';
+                }
+
+            }, 'image/webp', 0.5);
+        });
     </script>
 </body>
 </html>
